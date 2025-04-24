@@ -64,7 +64,7 @@ Feature: Everything About Pets
     When I request to find the pet by ID
     Then The client should receive HTTP 405 response status
 
-  Scenario Outline: Successfully Find Pet Status With Not Allowed Method
+  Scenario Outline: Find Pet Status With Not Allowed Method
     Given There are pets with status 'available'
     When I request to find pets status with method '<Method>'
     Then The client should receive HTTP 405 response status
