@@ -5,10 +5,14 @@ Automation API Testing using RestAssured with BDD Cucumber framework
 [(https://petstore.swagger.io/)](https://petstore.swagger.io/)
 
 ## Tech Stack
-1. Java
-2. Rest Assured 
-3. jUnit
-4. Cucumber
+1. IntelliJ - IDE
+2. Java 1.8 - Programming language 
+3. Rest Assured - API Automation library
+4. jUnit - Test Management library
+5. Cucumber - BDD
+
+## Folder Structure
+<img width="444" alt="Screenshot 2025-04-24 at 13 55 24" src="https://github.com/user-attachments/assets/998c7c0f-100d-44b5-adfb-1ac352c62d14" />
 
 ## Implemented Test Cases
 ### Positive Cases
@@ -27,7 +31,7 @@ Automation API Testing using RestAssured with BDD Cucumber framework
 6. Delete Pet Data With Unregistered ID
 
 ## Report
-Once the execution completes report will be generated in below folder.
+Once the execution completes report will be generated in below folder.<br>
 **target/cucumber-reports/cucumber-pretty/index.html**
 
 <img width="1200" alt="Screenshot 2025-04-24 at 12 35 10" src="https://github.com/user-attachments/assets/423232ed-ce96-4f9c-affd-80ae982083d0" />
