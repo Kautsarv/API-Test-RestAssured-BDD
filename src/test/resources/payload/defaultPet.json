@@ -1,0 +1,18 @@
+{
+  "id": 86002031,
+  "category": {
+    "id": 123,
+    "name": "Kucing Lama"
+  },
+  "name": "Test Kucing Lama",
+  "photoUrls": [
+    "string"
+  ],
+  "tags": [
+    {
+      "id": 321,
+      "name": "TestTags Lama"
+    }
+  ],
+  "status": "available"
+}
