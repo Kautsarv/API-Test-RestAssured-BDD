@@ -4,15 +4,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
-import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
-import io.restassured.RestAssured;
 import io.restassured.path.json.JsonPath;
-import io.restassured.response.Response;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -20,11 +16,13 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
 public class petStepDef {
-    private static final String BASE_URL = "https://petstore.swagger.io/v2";
-    private static Response response;
+    private static final String endpointPetUploadImage = "/uploadImage";
+    private static final String endpointPet = "/pet/";
+    private static final String endpointPetFindByStatus = "/pet/findByStatus";
     public static JsonNode jsonNode1, jsonNode2;
     public static String petID, petStatus, newPet, existingPet;
 
+    private final baseStepDef base = new baseStepDef();
     ObjectMapper objectMapper = new ObjectMapper();
 
     @Given("I have a pet with ID {string}")
@@ -49,122 +47,85 @@ public class petStepDef {
 
     @Given("I have pet data to add")
     public void iHavePetDataToAdd() throws IOException {
-        newPet = new String(Files.readAllBytes(Paths.get("src/test/resources/payload/addNewPet.json")));
+        newPet = base.getPayload("src/test/resources/payload/addNewPet.json");
     }
 
     @Given("I have an existing pet")
     public void iHaveAnExistingPet() throws IOException {
-        existingPet = new String(Files.readAllBytes(Paths.get("src/test/resources/payload/defaultPet.json")));
+        existingPet = base.getPayload("src/test/resources/payload/defaultPet.json");
         jsonNode1 = objectMapper.readTree(existingPet);
         petID = jsonNode1.get("id").asText();
         iRequestToFindThePetByID();
-        String result = JsonPath.from(response.asString()).getString("id");
+        int statusCode = baseStepDef.response.getStatusCode();
+        if(statusCode != 200){
+            base.callEndpointHttpMethodPostString(endpointPet, base.emptyHeader, base.emptyParameter, existingPet);
+            assertThat(baseStepDef.response.getStatusCode(), equalTo(200));
+            iRequestToFindThePetByID();
+        }
+        String result = JsonPath.from(baseStepDef.response.asString()).getString("id");
         assertThat(result, equalTo(petID));
     }
 
     @When("I request to find the pet by ID")
-    public void iRequestToFindThePetByID() {
-        RestAssured.baseURI = BASE_URL;
-        response = RestAssured.given()
-                .get("/pet/" + petID);
+    public void iRequestToFindThePetByID() throws IOException {
+        base.callEndpointHttpMethodGetString(endpointPet + petID, base.emptyHeader, base.emptyParameter);
     }
 
-
     @When("I request to find pets by status")
-    public void iWantToFindPetByStatus() {
-        RestAssured.baseURI = BASE_URL;
-        response = RestAssured.given()
-                                .get("/pet/findByStatus?status=" + petStatus);
+    public void iWantToFindPetByStatus() throws IOException {
+        HashMap<String, String> statusParam = new HashMap<>();
+        statusParam.put("status", petStatus);
+        base.callEndpointHttpMethodGetString(endpointPetFindByStatus, base.emptyHeader, statusParam);
     }
 
     @When("I request to find pets status with method {string}")
-    public void iRequestToFindPetsStatusWithMethodMethod(String method) {
-        RestAssured.baseURI = BASE_URL;
+    public void iRequestToFindPetsStatusWithMethod(String method) throws IOException {
+        HashMap<String, String> statusParam = new HashMap<>();
+        statusParam.put("status", petStatus);
         switch(method) {
             case "POST":
-                response = RestAssured.given()
-                        .post("/pet/findByStatus?status=" + petStatus);
+                base.callEndpointHttpMethodPostString(endpointPetFindByStatus, base.emptyHeader, statusParam, "");
                 break;
             case "PUT":
-                response = RestAssured.given()
-                        .put("/pet/findByStatus?status=" + petStatus);
+                base.callEndpointHttpMethodPutString(endpointPetFindByStatus, base.emptyHeader, statusParam, "");
                 break;
             case "PATCH":
-                response = RestAssured.given()
-                        .patch("/pet/findByStatus?status=" + petStatus);
+                base.callEndpointHttpMethodPatchString(endpointPetFindByStatus, base.emptyHeader, statusParam);
                 break;
             case "DELETE":
-                response = RestAssured.given()
-                        .delete("/pet/findByStatus?status=" + petStatus);
+                base.callEndpointHttpMethodDeleteString(endpointPetFindByStatus, base.emptyHeader, statusParam);
                 break;
         }
     }
 
     @When("I request to add a new pet")
     public void iSubmitRequestAddNewPet() throws IOException {
-        RestAssured.baseURI = BASE_URL;
-        response =
-                RestAssured.given()
-                        .contentType("application/json")
-                        .relaxedHTTPSValidation()
-                        .body(newPet)
-                        .when()
-                        .post("/pet/");
+        base.callEndpointHttpMethodPostString(endpointPet, base.emptyHeader, base.emptyParameter, newPet);
         jsonNode1 = objectMapper.readTree(newPet);
-        jsonNode2 = objectMapper.readTree(response.getBody().asString());
+        jsonNode2 = objectMapper.readTree(baseStepDef.response.getBody().asString());
     }
 
     @When("I request to add a new pet by ID")
-    public void iRequestToAddANewPetByID() {
-        Map<String, Object> request = new LinkedHashMap<>();
+    public void iRequestToAddANewPetByID() throws IOException {
+        Map<String, String> request = new LinkedHashMap<>();
         request.put("id", petID);
-        RestAssured.baseURI = BASE_URL;
-        response =
-                RestAssured.given()
-                        .contentType("application/json")
-                        .relaxedHTTPSValidation()
-                        .body(request)
-                        .when()
-                        .post("/pet/");
+        base.callEndpointHttpMethodPostMap(endpointPet, base.emptyHeader, base.emptyParameter, request);
     }
 
     @When("I request to update the pet data")
     public void iRequestToUpdateThePetData() throws IOException {
-        RestAssured.baseURI = BASE_URL;
-        String payload = new String(Files.readAllBytes(Paths.get("src/test/resources/payload/updatePet.json")));
-        response = RestAssured.given()
-                .contentType("application/json")
-                .relaxedHTTPSValidation()
-                .body(payload)
-                .when()
-                .put("/pet/");
+        String payload = base.getPayload("src/test/resources/payload/updatePet.json");
+        base.callEndpointHttpMethodPutString(endpointPet, base.emptyHeader, base.emptyParameter, payload);
         jsonNode2 = objectMapper.readTree(payload);
     }
 
     @When("I request to delete the pet by ID")
-    public void iRequestToDeleteThePetByID() {
-        RestAssured.baseURI = BASE_URL;
-        response = RestAssured.given()
-                .contentType("application/json")
-                .header("api_key", "special-key")
-                .relaxedHTTPSValidation()
-                .when()
-                .delete("/pet/"+petID);
+    public void iRequestToDeleteThePetByID() throws IOException {
+        Map<String, String> header = new LinkedHashMap<>();
+        header.put("api_key","special-key");
+        base.callEndpointHttpMethodDeleteString(endpointPet + petID, header, base.emptyParameter);
     }
 
-    @Then("The client should receive HTTP {int} response status")
-    public void theClientShouldReceiveHTTPResponseStatus(int httpResponse) {
-        assertThat(response.getStatusCode(), equalTo(httpResponse));
-    }
-
-    @And("The response body should contain {string} with value {string}")
-    public void iVerifyResponseBodyIdValueShouldBeID(String path, String value) {
-        String result = JsonPath.from(response.asString()).getString(path);
-        if (value.equals("NULL")) {
-            value = "";
-        }
-        assertThat(result, equalTo(value));
-    }
 
     @And("I verify add new pet response already correct")
     public void iVerifyAddNewPetResponseAlreadyCorrect() {
@@ -172,30 +133,30 @@ public class petStepDef {
     }
 
     @And("I verify pet data already updated")
-    public void iVerifyPetDataAlreadyUpdated() {
+    public void iVerifyPetDataAlreadyUpdated() throws IOException {
         petID = jsonNode2.get("id").asText();
         iRequestToFindThePetByID();
-        String result = JsonPath.from(response.asString()).getString("id");
+        String result = JsonPath.from(baseStepDef.response.asString()).getString("id");
         assertThat(result, equalTo(petID));
     }
 
     @And("I verify pet data already deleted")
-    public void iVerifyPetDataAlreadyDeleted() {
+    public void iVerifyPetDataAlreadyDeleted() throws IOException {
         iRequestToFindThePetByID();
-        String result = JsonPath.from(response.asString()).getString("message");
+        String result = JsonPath.from(baseStepDef.response.asString()).getString("message");
         assertThat(result, equalTo("Pet not found"));
     }
 
     @And("I revert deleted data")
     public void iRevertDeletedData() throws IOException {
-        RestAssured.baseURI = BASE_URL;
-        String payload = new String(Files.readAllBytes(Paths.get("src/test/resources/payload/defaultPet.json")));
-        response =
-                RestAssured.given()
-                        .contentType("application/json")
-                        .relaxedHTTPSValidation()
-                        .body(payload)
-                        .when()
-                        .post("/pet/");
+        String payload = base.getPayload("src/test/resources/payload/defaultPet.json");
+        base.callEndpointHttpMethodPostString(endpointPet, base.emptyHeader, base.emptyParameter, payload);
+    }
+
+    @When("I request to upload pet image")
+    public void iRequestToUploadPetImage() throws IOException {
+        String filepath = "src/test/resources/payload/cat-image.jpeg";
+        base.callEndpointHttpMethodPostUploadFile(endpointPet+petID+endpointPetUploadImage, filepath, base.emptyHeader, base.emptyParameter, "");
+        System.out.println(baseStepDef.response.asString());
     }
 }

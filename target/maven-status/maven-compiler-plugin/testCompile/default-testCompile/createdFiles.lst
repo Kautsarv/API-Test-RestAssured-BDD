@@ -1,2 +1,4 @@
+stepdefinitions/baseStepDef.class
+stepdefinitions/assertionStepDef.class
 runners/testRunners.class
 stepdefinitions/petStepDef.class

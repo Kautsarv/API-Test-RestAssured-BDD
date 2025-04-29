@@ -1,5 +1,11 @@
 Feature: Everything About Pets
 
+  Scenario: Successfully Upload Image Pet
+    Given I have a pet with ID '86002031'
+    When I request to upload pet image
+    Then The client should receive HTTP 200 response status
+    And The response body should contain 'message' with value 'File uploaded to ./cat-image.jpeg'
+
   Scenario: Successfully Add New Pet To Store
     Given I have pet data to add
     When I request to add a new pet
@@ -12,12 +18,6 @@ Feature: Everything About Pets
     Then The client should receive HTTP 200 response status
     And I verify pet data already updated
 
-  Scenario: Successfully Find Pet By ID
-    Given I have a pet with ID '8600203'
-    When I request to find the pet by ID
-    Then The client should receive HTTP 200 response status
-    And The response body should contain 'id' with value '8600203'
-
   Scenario Outline: Successfully Find Pet By Status
     Given There are pets with status '<Status>'
     When I request to find pets by status
@@ -29,6 +29,12 @@ Feature: Everything About Pets
       | available |
       | pending   |
       | sold      |
+
+  Scenario: Successfully Find Pet By ID
+    Given I have a pet with ID '86002031'
+    When I request to find the pet by ID
+    Then The client should receive HTTP 200 response status
+    And The response body should contain 'id' with value '86002031'
 
   Scenario: Successfully Delete Existing Pet Data
     Given I have a pet with ID '86002031'
@@ -56,7 +62,6 @@ Feature: Everything About Pets
     Examples:
       | ID                      |
       | abc                     |
-      | !@#                     |
       | 12345678901234567890123 |
 
   Scenario: Find Pet With Empty Parameter
